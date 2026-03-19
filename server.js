@@ -2,7 +2,6 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
-const fs = require("fs");
 const path = require("path");
 
 const app = express();
@@ -25,51 +24,43 @@ app.use(
   }),
 );
 
-// Path to configuration file
-const CONFIG_PATH = path.join(__dirname, "config.json");
+// ---------- IN‑MEMORY CONFIGURATION ----------
+// Initialize from environment variables (or use defaults)
+let config = {
+  whatsappNumber: process.env.DEFAULT_WHATSAPP_NUMBER || "",
+  centreLat: parseFloat(process.env.DEFAULT_LAT) || 40.7128,
+  centreLon: parseFloat(process.env.DEFAULT_LON) || -74.006,
+};
 
-// Helper: read config synchronously
+// Helper: read config (simply returns the current object)
 function readConfig() {
-  try {
-    const data = fs.readFileSync(CONFIG_PATH, "utf8");
-    return JSON.parse(data);
-  } catch (err) {
-    // File doesn't exist – create with defaults from environment
-    console.log("Config file not found, creating with defaults...");
-    const defaultConfig = {
-      whatsappNumber: process.env.DEFAULT_WHATSAPP_NUMBER || "", // <-- uses the new env var
-      centreLat: parseFloat(process.env.DEFAULT_LAT) || 40.7128,
-      centreLon: parseFloat(process.env.DEFAULT_LON) || -74.006,
-    };
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
-    return defaultConfig;
-  }
+  return config;
 }
 
-// Helper: write config synchronously
+// Helper: write config (updates the in‑memory object)
 function writeConfig(newConfig) {
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(newConfig, null, 2));
+  config = newConfig;
 }
 
 // ---------- PUBLIC ROUTES ----------
 
 // Serve the public page with injected centre coordinates
 app.get("/", (req, res) => {
-  const config = readConfig();
+  const currentConfig = readConfig();
   let html = fs.readFileSync(
     path.join(__dirname, "public", "index.html"),
     "utf8",
   );
   // Replace placeholders with actual values
-  html = html.replace("{{CENTRE_LAT}}", config.centreLat);
-  html = html.replace("{{CENTRE_LON}}", config.centreLon);
+  html = html.replace("{{CENTRE_LAT}}", currentConfig.centreLat);
+  html = html.replace("{{CENTRE_LON}}", currentConfig.centreLon);
   res.send(html);
 });
 
 // API endpoint to get the current WhatsApp number
 app.get("/api/whatsapp-number", (req, res) => {
-  const config = readConfig();
-  res.json({ number: config.whatsappNumber });
+  const currentConfig = readConfig();
+  res.json({ number: currentConfig.whatsappNumber });
 });
 
 // Serve static files (CSS, JS, images) – placed AFTER the custom '/' route
@@ -120,15 +111,15 @@ app.get("/admin/dashboard.html", (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect("/admin");
   }
-  const config = readConfig();
+  const currentConfig = readConfig();
   let html = fs.readFileSync(
     path.join(__dirname, "public", "admin", "dashboard.html"),
     "utf8",
   );
   // Replace placeholders with current values
-  html = html.replace("{{WHATSAPP_NUMBER}}", config.whatsappNumber);
-  html = html.replace("{{CENTRE_LAT}}", config.centreLat);
-  html = html.replace("{{CENTRE_LON}}", config.centreLon);
+  html = html.replace("{{WHATSAPP_NUMBER}}", currentConfig.whatsappNumber);
+  html = html.replace("{{CENTRE_LAT}}", currentConfig.centreLat);
+  html = html.replace("{{CENTRE_LON}}", currentConfig.centreLon);
 
   // Inject success/error messages if present
   const success = req.query.success
@@ -165,12 +156,13 @@ app.post("/admin/update-settings", (req, res) => {
     return res.redirect("/admin/dashboard.html?error=1");
   }
 
-  // Update config
-  const config = readConfig();
-  config.whatsappNumber = whatsappNumber.trim();
-  config.centreLat = lat;
-  config.centreLon = lon;
-  writeConfig(config);
+  // Update in‑memory config
+  const newConfig = {
+    whatsappNumber: whatsappNumber.trim(),
+    centreLat: lat,
+    centreLon: lon,
+  };
+  writeConfig(newConfig);
 
   res.redirect("/admin/dashboard.html?success=1");
 });
