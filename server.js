@@ -37,7 +37,7 @@ function readConfig() {
     // File doesn't exist – create with defaults from environment
     console.log("Config file not found, creating with defaults...");
     const defaultConfig = {
-      whatsappNumber: "",
+      whatsappNumber: process.env.DEFAULT_WHATSAPP_NUMBER || "", // <-- uses the new env var
       centreLat: parseFloat(process.env.DEFAULT_LAT) || 40.7128,
       centreLon: parseFloat(process.env.DEFAULT_LON) || -74.006,
     };
