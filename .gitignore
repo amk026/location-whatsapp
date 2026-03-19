@@ -1,0 +1,11 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Configuration file (contains runtime data)
+config.json
+
+# OS files
+.DS_Store

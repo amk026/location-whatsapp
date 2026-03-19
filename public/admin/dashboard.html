@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Admin Dashboard</h1>
+      {{MESSAGES}}
+      <form action="/admin/update-settings" method="POST">
+        <label for="whatsappNumber"
+          >WhatsApp Number (international format, no + or spaces):</label
+        >
+        <input
+          type="text"
+          id="whatsappNumber"
+          name="whatsappNumber"
+          value="{{WHATSAPP_NUMBER}}"
+          required
+        />
+
+        <label for="centreLat">Centre Latitude:</label>
+        <input
+          type="number"
+          id="centreLat"
+          name="centreLat"
+          step="any"
+          value="{{CENTRE_LAT}}"
+          required
+        />
+
+        <label for="centreLon">Centre Longitude:</label>
+        <input
+          type="number"
+          id="centreLon"
+          name="centreLon"
+          step="any"
+          value="{{CENTRE_LON}}"
+          required
+        />
+
+        <button type="submit">Update Settings</button>
+      </form>
+      <p><a href="/admin/logout">Logout</a></p>
+    </div>
+  </body>
+</html>
