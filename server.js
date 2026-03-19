@@ -2,6 +2,7 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
+const fs = require("fs"); // <-- ADD THIS LINE
 const path = require("path");
 
 const app = express();
